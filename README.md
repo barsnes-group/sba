@@ -1,4 +1,4 @@
-# Structured Stochastic Block Allocation
+# Structured Stochastic Batch Allocation
 
 Julia code for the allocation of a fixed cohort to batches.
 Currently it is not a Module, but rather just a set of files.
