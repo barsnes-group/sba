@@ -32,7 +32,7 @@ end
 
 
 function sba(samplesizes, batchsizes)
-    sba(copy(samplesizes), copy(batchsizes))
+    sba!(copy(samplesizes), copy(batchsizes))
 end
 
 function sba!(samplesizes, batchsizes)
