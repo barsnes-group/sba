@@ -16,11 +16,11 @@ end
 
 function writealltocsv(samplesizes, batchsizes, nRepeats, filename)
     towrite = zeros(Float64, (nRepeats, 0))
-    for fun in [randombinary, randomnonbinary, sba!]
+    for fun in [randombinary, randomnonbinary, sba, sbatwo, sbathree]
         towrite = hcat(towrite, getDeterminants(samplesizes, batchsizes, fun, nRepeats))
     end
     open(filename, "w") do thefile
-    write(thefile, "randBin,randNonBin,SBA\n")
+    write(thefile, "randBin,randNonBin,SBA,SBAtwo,SBAthree\n")
     writedlm(thefile, towrite, ",")
     end
     towrite
@@ -32,6 +32,7 @@ function runall()
 #    writealltocsv(fill(10,10), fill(5,20), nruns, "10times10subsinbs5.csv") # D
 #    writealltocsv([4,4,4,3,3,3,2,2], [5,5,5,5,5], nruns, "binaryimbalance.csv") # B
     writealltocsv([5,6,7,8,9,9], [8,8,7,7,7,7], nruns, "output/blockprex.csv") # D
-    writealltocsv(fill(5,10), fill(5,10), nruns, "output/10times5subsinbs5.csv") # B
-    writealltocsv([6,7,8,8,9], [3,3,3,3,3,3,3,3,3,3,3,3,2], nruns, "output/67899_3.csv") # C
+#    writealltocsv(fill(5,10), fill(5,10), nruns, "output/10times5subsinbs5.csv") # B
+    writealltocsv(fill(10,10), fill(5,20), nruns, "output/10times10subsinbs5.csv") # B
+    writealltocsv([6,7,8,8,9], [3,3,3,3,3,3,3,3,3,3,3,3,2], nruns, "output/67889_3.csv") # C
 end
