@@ -14,11 +14,16 @@ include("doptim.jl")
 # 2-dimensional Array of size (B, T) where B is the number of batches
 # and T is the number of treatments, with the number of subjects of
 # each treatment per batch.
-function getOptimalAllocation(samplesizes, batchsizes, timing)
+function getOptimalAllocation(samplesizes, batchsizes; timing=false, allocation=true)
     topleft = makeTopLeft(samplesizes)
     bottomright = makeBottomRight(batchsizes)
     pre = preallocation!(samplesizes, batchsizes)
-    optimalAllocation(zeros(Int, (0,length(samplesizes))), samplesizes, batchsizes, Combinatorics.combinations, topleft, bottomright, pre, timing)
+    incidence = optimalAllocation(zeros(Int, (0,length(samplesizes))), samplesizes, batchsizes, Combinatorics.combinations, topleft, bottomright, pre, timing)
+    if allocation
+        return incidence
+    else
+        return doptim(incidence, topleft, bottomright)
+    end
 end
 
 # This is a helper function, do not call by hand.
@@ -28,9 +33,13 @@ function optimalAllocation(allocation, samplesizes, batchsizes, fun, topleft, bo
     allocated = dropdims(sum(allocation, dims=1), dims=1)
     subsleft = samplesizes .- allocated
     batchleft = length(batchsizes) - size(allocation, 1)
+    #println("batchsizes", batchsizes)
+    #println("currentbatch", currentbatch)
+    #println(batchleft)
     if any(allocated .> samplesizes) || any(subsleft .> batchleft)
         return zeros(Int, (length(batchsizes), length(samplesizes)))
     elseif sum(batchsizes[currentbatch:length(batchsizes)]) == 0
+        #display(allocation)
         return vcat(allocation, zeros(Int, (batchleft, length(samplesizes))))+preallocation
     elseif size(allocation, 1) == length(batchsizes)
         return allocation+preallocation
@@ -43,7 +52,7 @@ function optimalAllocation(allocation, samplesizes, batchsizes, fun, topleft, bo
     if timing
         println(iterlen, " iterations to perform.")
     end
-    bestdet = 0
+    bestdet = 0.0
     bestalloc = zeros(Int, (length(batchsizes), length(samplesizes)))
     for (idx, cmb) in enumerate(batchiterator)
         if timing
@@ -52,9 +61,9 @@ function optimalAllocation(allocation, samplesizes, batchsizes, fun, topleft, bo
             else
                 elapsed = now() - time0
                 if (elapsed < Second(60))
-                    println(round(idx-1 / iterlen, 1), "%\t", round(elapsed, Second(1)), " seconds.")
+                    println(round(idx-1 / iterlen, digits=1), "%\t", round(elapsed, Second(1)), " seconds.")
                 else
-                    println(round(idx-1 / iterlen, 1), "%\t", round(elapsed, Minute(1)), " minutes.")
+                    println(round(idx-1 / iterlen, digits=1), "%\t", round(elapsed, Minute(1)), " minutes.")
                 end
                 estleft = elapsed/(idx-1) * (iterlen-idx+1)
                 println("Estimated time left: ", Dates.format(estleft, "HH:MM"))

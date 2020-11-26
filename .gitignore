@@ -90,3 +90,4 @@ vignettes/*.pdf
 
 ## Output
 src/output/
+src/*.csv
