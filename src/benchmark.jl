@@ -4,6 +4,7 @@ include("doptim.jl")
 include("batches.jl")
 include("random.jl")
 include("sba.jl")
+include("searchspace.jl")
 
 function getDeterminants(samplesizes, batchsizes, f, nRepeats)
     topleft = makeTopLeft(samplesizes)
@@ -135,6 +136,47 @@ function runthem(samplesizes, nruns)
         # [samplesizes, batchsize, random, sba]
         batchsizes=maxbatchsizetobatchsizes(sum(samplesizes), mbs)
         rv = vcat(rv, [string(samplesizes) mbs maximum(getDeterminants(samplesizes, batchsizes, sbathree, nruns)) maximum(getDeterminants(samplesizes, batchsizes, randombinary, nruns))])
+    end
+    rv
+end
+
+
+
+function runspace(maxsubs, filename)
+    rv = zeros(Float64, (0, 7))
+    for g1=3:maxsubs
+        for g2=g1:maxsubs
+            for g3=g2:maxsubs
+                rv = vcat(rv, runbothspace([g1, g2, g3]))
+                for g4=g3:maxsubs
+                    rv = vcat(rv, runbothspace([g1, g2, g3, g4]))
+                    for g5=g4:maxsubs
+                        rv = vcat(rv, runbothspace([g1, g2, g3, g4, g5]))
+                        for g6=g5:maxsubs
+                            rv = vcat(rv, runbothspace([g1, g2, g3, g4, g5, g6]))
+                            println([g1 g2 g3 g4 g5 g6])
+                        end
+                    end
+                end
+            end
+        end
+    end
+    open(filename, "w") do thefile
+        write(thefile, "samplesizes,batchsize,nsubs,naive,space,ntime,stime\n")
+        writedlm(thefile, rv, ",")
+    end
+    rv
+end
+
+function runbothspace(samplesizes)
+    rv = zeros(Float64, (0, 7))
+    for mbs=2:min(sum(samplesizes), 10)
+        println(samplesizes, mbs)
+        # [samplesizes, batchsize, nsubs, naive, space, ntime, stime]
+        batchsizes=maxbatchsizetobatchsizes(sum(samplesizes), mbs)
+        naive = @timed getspace(samplesizes, batchsizes, true)
+        space = @timed getspace(samplesizes, batchsizes, false)
+        rv = vcat(rv, [string(samplesizes) mbs sum(samplesizes) naive[1] space[1] naive[2] space[2]])
     end
     rv
 end
