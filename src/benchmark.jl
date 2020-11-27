@@ -56,6 +56,55 @@ function runall()
     writealltocsv([6,7,8,8,9], [3,3,3,3,3,3,3,3,3,3,3,3,2], nruns, "output/67889_3.csv") # C
 end
 
+function marathons()
+    nruns=1000
+    writemarathon(fill(6,5), fill(3,10), nruns, "output/5times6subsinbs3marathon.csv") # A
+    writemarathon(fill(10,10), fill(5,20), nruns, "output/10times10subsin5marathon.csv") # B
+    writemarathon([6,7,8,8,9], [3,3,3,3,3,3,3,3,3,3,3,3,2], nruns, "output/67889_3marathon.csv") # C
+    writemarathon([5,6,7,8,9,9], [8,8,7,7,7,7], nruns, "output/blockprexmarathon.csv") # D
+end
+
+function writemarathon(samplesizes, batchsizes, nRepeats, filename)
+    marathonlength = 1000
+    towrite = zeros(Float64, (marathonlength, 0))
+    for fun in [randombinary, randomnonbinary, sba, sbatwo, sbathree]
+        Random.seed!(1234)
+        dets = []
+        for i in 1:marathonlength
+            push!(dets, getAllocation(samplesizes, batchsizes, nRepeats, fun, false))
+        end
+        towrite = hcat(towrite, dets)
+    end
+    open(filename, "w") do thefile
+        write(thefile, "randBin,randNonBin,SBA,SBAtwo,SBAthree\n")
+        writedlm(thefile, towrite, ",")
+    end
+    towrite
+end
+
+function getAllocation(samplesizes, batchsizes, nreps=1000, fun=sbathree, allocation=true, seed=nothing)
+    if seed != nothing
+        Random.seed!(seed)
+    end
+    topleft = makeTopLeft(samplesizes)
+    bottomright = makeBottomRight(batchsizes)
+    bestdet = 0.0
+    bestallo = zeros(Int, (length(batchsizes), length(samplesizes)))
+    for i in 1:nreps
+        newallocation = fun(copy(samplesizes), copy(batchsizes))
+        newdeterminant = doptim(newallocation, topleft, bottomright)
+        if newdeterminant > bestdet
+            bestdet = newdeterminant
+            bestallo = newallocation
+        end
+    end
+    if allocation
+        return bestallo
+    else 
+        return bestdet
+    end
+end
+
 # number of groups
 # 3 - 6
 # number of subjects per group
@@ -119,7 +168,7 @@ end
 
 function runbest(samplesizes)
     rv = zeros(Float64, (0, 5))
-    for mbs=3:min(sum(samplesizes), 10)
+    for mbs=43min(sum(samplesizes), 10)
         # [samplesizes, batchsize, nsubs, optimalD, time]
         print("nsubs ", sum(samplesizes), " mbs ", mbs)
         batchsizes=maxbatchsizetobatchsizes(sum(samplesizes), mbs)
@@ -170,13 +219,49 @@ end
 
 function runbothspace(samplesizes)
     rv = zeros(Float64, (0, 7))
-    for mbs=2:min(sum(samplesizes), 10)
+    for mbs=4:min(sum(samplesizes), 10)
         println(samplesizes, mbs)
         # [samplesizes, batchsize, nsubs, naive, space, ntime, stime]
         batchsizes=maxbatchsizetobatchsizes(sum(samplesizes), mbs)
         naive = @timed getspace(samplesizes, batchsizes, true)
         space = @timed getspace(samplesizes, batchsizes, false)
         rv = vcat(rv, [string(samplesizes) mbs sum(samplesizes) naive[1] space[1] naive[2] space[2]])
+    end
+    rv
+end
+
+function allnaive(maxsubs, filename)
+    rv = zeros(Float64, (0, 6))
+    for g1=3:maxsubs
+        for g2=g1:maxsubs
+            for g3=g2:maxsubs
+                rv = vcat(rv, runnaivespace([g1, g2, g3]))
+                for g4=g3:maxsubs
+                    rv = vcat(rv, runnaivespace([g1, g2, g3, g4]))
+                    for g5=g4:maxsubs
+                        rv = vcat(rv, runnaivespace([g1, g2, g3, g4, g5]))
+                        for g6=g5:maxsubs
+                            rv = vcat(rv, runnaivespace([g1, g2, g3, g4, g5, g6]))
+                            println([g1 g2 g3 g4 g5 g6])
+                        end
+                    end
+                end
+            end
+        end
+    end
+    open(filename, "w") do thefile
+        write(thefile, "samplesizes,batchsize,nsubs,ngroups,nbatch,naive\n")
+        writedlm(thefile, rv, ",")
+    end
+    rv
+end
+
+function runnaivespace(samplesizes)
+    rv = zeros(Float64, (0, 6))
+    for mbs=2:min(sum(samplesizes), 10)
+        # [samplesizes, batchsize, nsubs, ngroups, nbatch, naive]
+        batchsizes=maxbatchsizetobatchsizes(sum(samplesizes), mbs)
+        rv = vcat(rv, [string(samplesizes) mbs sum(samplesizes) length(samplesizes) length(batchsizes) getlogspace(samplesizes, batchsizes, 10)])
     end
     rv
 end

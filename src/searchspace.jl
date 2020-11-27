@@ -3,6 +3,40 @@ using Combinatorics
 using Dates
 include("preallocation.jl")
 
+function nonzerovector(x)
+    rv = []
+    for xx in x
+        if xx > 0
+            push!(rv, xx)
+        end
+    end
+    rv
+end
+
+function getlogspace(samplesizes, batchsizes, base=10)
+    getlogspace!(copy(samplesizes), copy(batchsizes), base)
+end
+
+function getlogspace!(samplesizes, batchsizes, base=10)
+    preallocation!(samplesizes, batchsizes)
+    if (sum(samplesizes) == 0)
+        return 0
+    else
+        news = nonzerovector(samplesizes)
+        newb = nonzerovector(batchsizes)
+        return naivelogspace(news, newb, base)
+    end
+end
+
+function naivelogspace(samplesizes, batchsizes, base=10)
+    if length(batchsizes) == 1
+        return log(base, 1)
+    else
+        return log(base, binomial(length(samplesizes), batchsizes[1])) +
+            naivelogspace(samplesizes, batchsizes[2:end])
+    end
+end
+
 function getspace(samplesizes, batchsizes, naive=true)
     getspace!(copy(samplesizes), copy(batchsizes), naive)
 end
