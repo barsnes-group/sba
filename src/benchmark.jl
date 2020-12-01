@@ -66,14 +66,16 @@ end
 
 function writemarathon(samplesizes, batchsizes, nRepeats, filename)
     marathonlength = 1000
-    towrite = zeros(Float64, (marathonlength, 0))
-    for fun in [randombinary, randomnonbinary, sba, sbatwo, sbathree]
+    topleft = makeTopLeft(samplesizes)
+    bottomright = makeBottomRight(batchsizes)
+    funcs = [randombinary, randomnonbinary, sba, sbatwo, sbathree]
+    towrite = zeros(Float64, (marathonlength*marathonlength, length(funcs)))
+    for (idx, fun) in enumerate(funcs)
         Random.seed!(1234)
-        dets = []
-        for i in 1:marathonlength
-            push!(dets, getAllocation(samplesizes, batchsizes, nRepeats, fun, false))
+        dets = zeros(Float64, (0,1))
+        for i in 1:(marathonlength*marathonlength)
+            towrite[i, idx] = doptim(fun(copy(samplesizes), copy(batchsizes)), topleft, bottomright)
         end
-        towrite = hcat(towrite, dets)
     end
     open(filename, "w") do thefile
         write(thefile, "randBin,randNonBin,SBA,SBAtwo,SBAthree\n")
