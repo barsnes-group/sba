@@ -7,10 +7,7 @@ using LinearAlgebra
 # batches and T is the number of treatments.
 
 function doptim(allom, topleft, bottomright)
-    bottomleft = hcat(dropdims(sum(allom, dims=2), dims=2)[2:end],
-                      allom[2:end, 2:end])
-    det(hcat(vcat(topleft, bottomleft),
-             vcat(transpose(bottomleft), bottomright)))
+    1 / det(infomat(allom, topleft, bottomright))
 end
 
 function makeTopLeft(samplesizes)
@@ -28,9 +25,24 @@ function makeBottomRight(batchsizes)
     bottomright
 end
 
-function ecrit(allom, topleft, bottomright)
+function infomat(allom, topleft, bottomright)
     bottomleft = hcat(dropdims(sum(allom, dims=2), dims=2)[2:end],
                       allom[2:end, 2:end])
-    eigvals(hcat(vcat(topleft, bottomleft),
-                vcat(transpose(bottomleft), bottomright)))
+    hcat(vcat(topleft, bottomleft),
+         vcat(transpose(bottomleft), bottomright))
 end
+
+# minimise variance of least well-estimated contrast
+# lower is better
+function ecrit(allom, topleft, bottomright)
+    # maximum(eigvals(inv(infomat(allom, topleft, bottomright)))) # equivalently
+    maximum(1 ./ eigvals(infomat(allom, topleft, bottomright)))
+end
+
+# minimise sum of average variances
+# lower values is better
+function acrit(allom, topleft, bottomright)
+    # tr(inv(infomat((allom, topleft, bottomright)))) # equivalently
+    sum(1 ./ eigvals(infomat(allom, topleft, bottomright)))
+end
+

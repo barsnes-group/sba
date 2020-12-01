@@ -52,7 +52,7 @@ function optimalAllocation(allocation, samplesizes, batchsizes, fun, topleft, bo
     if timing
         println(iterlen, " iterations to perform.")
     end
-    bestdet = 0.0
+    bestdet = Inf
     bestalloc = zeros(Int, (length(batchsizes), length(samplesizes)))
     for (idx, cmb) in enumerate(batchiterator)
         if timing
@@ -74,7 +74,7 @@ function optimalAllocation(allocation, samplesizes, batchsizes, fun, topleft, bo
         newbatch[deterministic] .= 1
         tempalloc = optimalAllocation(vcat(allocation, newbatch), samplesizes, batchsizes, fun, topleft, bottomright, preallocation, false)
         tempdet = doptim(tempalloc, topleft, bottomright)
-        if tempdet > bestdet
+        if tempdet < bestdet
             bestalloc = tempalloc
             bestdet = tempdet
         end

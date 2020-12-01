@@ -20,12 +20,12 @@ end
 function getBest(samplesizes, batchsizes, f, nRepeats)
     topleft = makeTopLeft(samplesizes)
     bottomright = makeBottomRight(batchsizes)
-    bestdet = 0.0
+    bestdet = Inf
     bestalloc = zeros(Int, (length(batchsizes), length(samplesizes)))
     for i in 1:nRepeats
         allocation = f(copy(samplesizes), copy(batchsizes))
         tempdet = doptim(allocation, topleft, bottomright)
-        if tempdet > bestdet
+        if tempdet < bestdet
             tempdet = bestdet
             bestalloc = allocation
         end
@@ -64,7 +64,32 @@ function marathons()
     writemarathon([5,6,7,8,9,9], [8,8,7,7,7,7], nruns, "output/blockprexmarathon.csv") # D
 end
 
-function writemarathon(samplesizes, batchsizes, nRepeats, filename)
+function marathond()
+    nruns=1000
+    writemarathon(fill(6,5), fill(3,10), nruns, "5times6subsinbs3marathond.csv", doptim) # A
+    writemarathon(fill(10,10), fill(5,20), nruns, "10times10subsin5marathond.csv", doptim) # B
+    writemarathon([6,7,8,8,9], [3,3,3,3,3,3,3,3,3,3,3,3,2], nruns, "67889_3marathond.csv", doptim) # C
+    writemarathon([5,6,7,8,9,9], [8,8,7,7,7,7], nruns, "blockprexmarathond.csv", doptim) # D
+end
+function marathone()
+    nruns=1000
+    writemarathon(fill(6,5), fill(3,10), nruns, "5times6subsinbs3marathone.csv", ecrit) # A
+    writemarathon(fill(10,10), fill(5,20), nruns, "10times10subsin5marathone.csv", ecrit) # B
+    writemarathon([6,7,8,8,9], [3,3,3,3,3,3,3,3,3,3,3,3,2], nruns, "67889_3marathone.csv", ecrit) # C
+    writemarathon([5,6,7,8,9,9], [8,8,7,7,7,7], nruns, "blockprexmarathone.csv", ecrit) # D
+end
+function marathona()
+    nruns=1000
+    writemarathon(fill(6,5), fill(3,10), nruns, "5times6subsinbs3marathona.csv", acrit) # A
+    writemarathon(fill(10,10), fill(5,20), nruns, "10times10subsin5marathona.csv", acrit) # B
+    writemarathon([6,7,8,8,9], [3,3,3,3,3,3,3,3,3,3,3,3,2], nruns, "67889_3marathona.csv", acrit) # C
+    writemarathon([5,6,7,8,9,9], [8,8,7,7,7,7], nruns, "blockprexmarathona.csv", acrit) # D
+end
+
+function writemarathon(samplesizes, batchsizes, nRepeats, filename, optim=nothing)
+    if optim == nothing
+        optim = doptim
+    end
     marathonlength = 1000
     topleft = makeTopLeft(samplesizes)
     bottomright = makeBottomRight(batchsizes)
@@ -90,12 +115,12 @@ function getAllocation(samplesizes, batchsizes, nreps=1000, fun=sbathree, alloca
     end
     topleft = makeTopLeft(samplesizes)
     bottomright = makeBottomRight(batchsizes)
-    bestdet = 0.0
+    bestdet = Inf
     bestallo = zeros(Int, (length(batchsizes), length(samplesizes)))
     for i in 1:nreps
         newallocation = fun(copy(samplesizes), copy(batchsizes))
         newdeterminant = doptim(newallocation, topleft, bottomright)
-        if newdeterminant > bestdet
+        if newdeterminant < bestdet
             bestdet = newdeterminant
             bestallo = newallocation
         end
