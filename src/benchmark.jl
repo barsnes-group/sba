@@ -9,10 +9,12 @@ include("searchspace.jl")
 function getDeterminants(samplesizes, batchsizes, f, nRepeats)
     topleft = makeTopLeft(samplesizes)
     bottomright = makeBottomRight(batchsizes)
-    determinants = fill(-1.0, nRepeats)
+    determinants = fill(-1.0, (nRepeats, 3))
     for i in 1:nRepeats
         allocation = f(copy(samplesizes), copy(batchsizes))
-        determinants[i] = doptim(allocation, topleft, bottomright)
+        determinants[i,2] = doptim(allocation, topleft, bottomright)
+        determinants[i,3] = ecrit(allocation, topleft, bottomright)
+        determinants[i,1] = acrit(allocation, topleft, bottomright)
     end
     determinants
 end
@@ -36,14 +38,37 @@ end
 function writealltocsv(samplesizes, batchsizes, nRepeats, filename)
     towrite = zeros(Float64, (nRepeats, 0))
     for fun in [randombinary, randomnonbinary, sba, sbatwo, sbathree]
+        Random.seed!(1234)
         towrite = hcat(towrite, getDeterminants(samplesizes, batchsizes, fun, nRepeats))
     end
     open(filename, "w") do thefile
-    write(thefile, "randBin,randNonBin,SBA,SBAtwo,SBAthree\n")
+    write(thefile, "randBinA,randBinD,randBinE,randNonBinA,randNonBinD,randNonBinE,SBAA,SBAD,SSBAE,SBAtwoA,SBAtwoD,SBAtwoE,SBAthreeA,SBAthreeD,SBAthreeE\n")
     writedlm(thefile, towrite, ",")
     end
     towrite
 end
+
+function writecritC()
+    samplesizes=[6,7,8,8,9]
+    batchsizes=[3,3,3,3,3,3,3,3,3,3,3,3,2]
+    topleft = makeTopLeft(samplesizes)
+    bottomright = makeBottomRight(batchsizes)
+    towrite = zeros(Float64, (1000_000, 0))
+    for fun in [randombinary, sbathree]
+        temp = []
+        Random.seed!(1234)
+        for i in 1:1000_000
+            push!(temp, ecritm(fun(copy(samplesizes), copy(batchsizes)), topleft, bottomright))
+        end
+        towrite = hcat(towrite, temp)
+    end
+    open("EcritCmaximise.csv", "w") do thefile
+        write(thefile, "randBin,SBAthree\n")
+        writedlm(thefile, towrite, ",")
+    end
+    towrite
+end
+
 
 function runall()
     nruns=1000
@@ -66,24 +91,37 @@ end
 
 function marathond()
     nruns=1000
-    writemarathon(fill(6,5), fill(3,10), nruns, "5times6subsinbs3marathond.csv", doptim) # A
-    writemarathon(fill(10,10), fill(5,20), nruns, "10times10subsin5marathond.csv", doptim) # B
-    writemarathon([6,7,8,8,9], [3,3,3,3,3,3,3,3,3,3,3,3,2], nruns, "67889_3marathond.csv", doptim) # C
-    writemarathon([5,6,7,8,9,9], [8,8,7,7,7,7], nruns, "blockprexmarathond.csv", doptim) # D
+    writemarathon(fill(6,5), fill(3,10), nruns, "marathonade/5times6subsinbs3marathond.csv", doptim) # A
+    writemarathon(fill(10,10), fill(5,20), nruns, "marathonade/10times10subsin5marathond.csv", doptim) # B
+    writemarathon([6,7,8,8,9], [3,3,3,3,3,3,3,3,3,3,3,3,2], nruns, "marathonade/67889_3marathond.csv", doptim) # C
+    writemarathon([5,6,7,8,9,9], [8,8,7,7,7,7], nruns, "marathonade/blockprexmarathond.csv", doptim) # D
 end
 function marathone()
     nruns=1000
-    writemarathon(fill(6,5), fill(3,10), nruns, "5times6subsinbs3marathone.csv", ecrit) # A
-    writemarathon(fill(10,10), fill(5,20), nruns, "10times10subsin5marathone.csv", ecrit) # B
-    writemarathon([6,7,8,8,9], [3,3,3,3,3,3,3,3,3,3,3,3,2], nruns, "67889_3marathone.csv", ecrit) # C
-    writemarathon([5,6,7,8,9,9], [8,8,7,7,7,7], nruns, "blockprexmarathone.csv", ecrit) # D
+    writemarathon(fill(6,5), fill(3,10), nruns, "marathonade/5times6subsinbs3marathone.csv", ecrit) # A
+    writemarathon(fill(10,10), fill(5,20), nruns, "marathonade/10times10subsin5marathone.csv", ecrit) # B
+    writemarathon([6,7,8,8,9], [3,3,3,3,3,3,3,3,3,3,3,3,2], nruns, "marathonade/67889_3marathone.csv", ecrit) # C
+    writemarathon([5,6,7,8,9,9], [8,8,7,7,7,7], nruns, "marathonade/blockprexmarathone.csv", ecrit) # D
+end
+function marathonemax()
+    nruns=1000
+    writemarathon(fill(6,5), fill(3,10), nruns, "marathonade/5times6subsinbs3marathonemax.csv", ecritm) # A
+    writemarathon(fill(10,10), fill(5,20), nruns, "marathonade/10times10subsin5marathonemax.csv", ecritm) # B
+    writemarathon([6,7,8,8,9], [3,3,3,3,3,3,3,3,3,3,3,3,2], nruns, "marathonade/67889_3marathonemax.csv", ecritm) # C
+    writemarathon([5,6,7,8,9,9], [8,8,7,7,7,7], nruns, "marathonade/blockprexmarathonemax.csv", ecritm) # D
 end
 function marathona()
     nruns=1000
-    writemarathon(fill(6,5), fill(3,10), nruns, "5times6subsinbs3marathona.csv", acrit) # A
-    writemarathon(fill(10,10), fill(5,20), nruns, "10times10subsin5marathona.csv", acrit) # B
-    writemarathon([6,7,8,8,9], [3,3,3,3,3,3,3,3,3,3,3,3,2], nruns, "67889_3marathona.csv", acrit) # C
-    writemarathon([5,6,7,8,9,9], [8,8,7,7,7,7], nruns, "blockprexmarathona.csv", acrit) # D
+    writemarathon(fill(6,5), fill(3,10), nruns, "marathonade/5times6subsinbs3marathona.csv", acrit) # A
+    writemarathon(fill(10,10), fill(5,20), nruns, "marathonade/10times10subsin5marathona.csv", acrit) # B
+    writemarathon([6,7,8,8,9], [3,3,3,3,3,3,3,3,3,3,3,3,2], nruns, "marathonade/67889_3marathona.csv", acrit) # C
+    writemarathon([5,6,7,8,9,9], [8,8,7,7,7,7], nruns, "marathonade/blockprexmarathona.csv", acrit) # D
+end
+
+function marathonade()
+    marathona()
+    marathond()
+    marathone()
 end
 
 function writemarathon(samplesizes, batchsizes, nRepeats, filename, optim=nothing)
@@ -93,17 +131,17 @@ function writemarathon(samplesizes, batchsizes, nRepeats, filename, optim=nothin
     marathonlength = 1000
     topleft = makeTopLeft(samplesizes)
     bottomright = makeBottomRight(batchsizes)
-    funcs = [randombinary, randomnonbinary, sba, sbatwo, sbathree]
+    funcs = [randombinary, sbathree]
     towrite = zeros(Float64, (marathonlength*marathonlength, length(funcs)))
     for (idx, fun) in enumerate(funcs)
         Random.seed!(1234)
         dets = zeros(Float64, (0,1))
         for i in 1:(marathonlength*marathonlength)
-            towrite[i, idx] = doptim(fun(copy(samplesizes), copy(batchsizes)), topleft, bottomright)
+            towrite[i, idx] = optim(fun(copy(samplesizes), copy(batchsizes)), topleft, bottomright)
         end
     end
     open(filename, "w") do thefile
-        write(thefile, "randBin,randNonBin,SBA,SBAtwo,SBAthree\n")
+        write(thefile, "randBin,SBAthree\n")
         writedlm(thefile, towrite, ",")
     end
     towrite

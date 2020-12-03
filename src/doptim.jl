@@ -6,8 +6,13 @@ using LinearAlgebra
 # allocation matrix should be of size (B, T) where B is the number of
 # batches and T is the number of treatments.
 
+#lower is better
 function doptim(allom, topleft, bottomright)
     1 / det(infomat(allom, topleft, bottomright))
+end
+# higher is better
+function doptimm(allom, topleft, bottomright)
+    det(infomat(allom, topleft, bottomright))
 end
 
 function makeTopLeft(samplesizes)
@@ -38,11 +43,19 @@ function ecrit(allom, topleft, bottomright)
     # maximum(eigvals(inv(infomat(allom, topleft, bottomright)))) # equivalently
     maximum(1 ./ eigvals(infomat(allom, topleft, bottomright)))
 end
+# higher is better
+function ecritm(allom, topleft, bottomright)
+    eigmin(infomat(allom, topleft, bottomright))
+end
 
 # minimise sum of average variances
 # lower values is better
 function acrit(allom, topleft, bottomright)
-    # tr(inv(infomat((allom, topleft, bottomright)))) # equivalently
+    # tr(inv(infomat(allom, topleft, bottomright))) # equivalently
     sum(1 ./ eigvals(infomat(allom, topleft, bottomright)))
+end
+# higher values is better
+function acritm(allom, topleft, bottomright)
+    tr(infomat(allom, topleft, bottomright))
 end
 
