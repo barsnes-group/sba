@@ -93,3 +93,6 @@ vignettes/*.pdf
 ## Output
 src/output/
 src/*.csv
+
+## Overview
+overview.md

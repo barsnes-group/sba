@@ -9,12 +9,10 @@ include("searchspace.jl")
 function getDeterminants(samplesizes, batchsizes, f, nRepeats)
     topleft = makeTopLeft(samplesizes)
     bottomright = makeBottomRight(batchsizes)
-    determinants = fill(-1.0, (nRepeats, 3))
+    determinants = fill(-1.0, nRepeats)
     for i in 1:nRepeats
         allocation = f(copy(samplesizes), copy(batchsizes))
-        determinants[i,2] = doptim(allocation, topleft, bottomright)
-        determinants[i,3] = ecrit(allocation, topleft, bottomright)
-        determinants[i,1] = acrit(allocation, topleft, bottomright)
+        determinants[i] = doptim(allocation, topleft, bottomright)
     end
     determinants
 end
@@ -22,13 +20,13 @@ end
 function getBest(samplesizes, batchsizes, f, nRepeats)
     topleft = makeTopLeft(samplesizes)
     bottomright = makeBottomRight(batchsizes)
-    bestdet = Inf
+    bestdet = 0.0
     bestalloc = zeros(Int, (length(batchsizes), length(samplesizes)))
     for i in 1:nRepeats
         allocation = f(copy(samplesizes), copy(batchsizes))
         tempdet = doptim(allocation, topleft, bottomright)
-        if tempdet < bestdet
-            tempdet = bestdet
+        if tempdet > bestdet
+            bestdet = tempdet
             bestalloc = allocation
         end
     end
@@ -37,108 +35,23 @@ end
 
 function writealltocsv(samplesizes, batchsizes, nRepeats, filename)
     towrite = zeros(Float64, (nRepeats, 0))
-    for fun in [randombinary, randomnonbinary, sba, sbatwo, sbathree]
+    for fun in [randombinary, sba]
         Random.seed!(1234)
         towrite = hcat(towrite, getDeterminants(samplesizes, batchsizes, fun, nRepeats))
     end
     open(filename, "w") do thefile
-    write(thefile, "randBinA,randBinD,randBinE,randNonBinA,randNonBinD,randNonBinE,SBAA,SBAD,SSBAE,SBAtwoA,SBAtwoD,SBAtwoE,SBAthreeA,SBAthreeD,SBAthreeE\n")
-    writedlm(thefile, towrite, ",")
-    end
-    towrite
-end
-
-function writecritC()
-    samplesizes=[6,7,8,8,9]
-    batchsizes=[3,3,3,3,3,3,3,3,3,3,3,3,2]
-    topleft = makeTopLeft(samplesizes)
-    bottomright = makeBottomRight(batchsizes)
-    towrite = zeros(Float64, (1000_000, 0))
-    for fun in [randombinary, sbathree]
-        temp = []
-        Random.seed!(1234)
-        for i in 1:1000_000
-            push!(temp, ecritm(fun(copy(samplesizes), copy(batchsizes)), topleft, bottomright))
-        end
-        towrite = hcat(towrite, temp)
-    end
-    open("EcritCmaximise.csv", "w") do thefile
-        write(thefile, "randBin,SBAthree\n")
+        write(thefile, "randBin,SBA\n")
         writedlm(thefile, towrite, ",")
     end
     towrite
 end
 
-
-function runall()
-    nruns=1000
-    writealltocsv(fill(6,5), fill(3,10), nruns, "output/5times6subsinbs3.csv") # A
-#    writealltocsv(fill(10,10), fill(5,20), nruns, "10times10subsinbs5.csv") # D
-#    writealltocsv([4,4,4,3,3,3,2,2], [5,5,5,5,5], nruns, "binaryimbalance.csv") # B
-    writealltocsv([5,6,7,8,9,9], [8,8,7,7,7,7], nruns, "output/blockprex.csv") # D
-#    writealltocsv(fill(5,10), fill(5,10), nruns, "output/10times5subsinbs5.csv") # B
-    writealltocsv(fill(10,10), fill(5,20), nruns, "output/10times10subsinbs5.csv") # B
-    writealltocsv([6,7,8,8,9], [3,3,3,3,3,3,3,3,3,3,3,3,2], nruns, "output/67889_3.csv") # C
-end
-
-function marathons()
-    nruns=1000
-    writemarathon(fill(6,5), fill(3,10), nruns, "output/5times6subsinbs3marathon.csv") # A
-    writemarathon(fill(10,10), fill(5,20), nruns, "output/10times10subsin5marathon.csv") # B
-    writemarathon([6,7,8,8,9], [3,3,3,3,3,3,3,3,3,3,3,3,2], nruns, "output/67889_3marathon.csv") # C
-    writemarathon([5,6,7,8,9,9], [8,8,7,7,7,7], nruns, "output/blockprexmarathon.csv") # D
-end
-
-function marathond()
-    nruns=1000
-    writemarathon(fill(6,5), fill(3,10), nruns, "marathonade/5times6subsinbs3marathond.csv", doptim) # A
-    writemarathon(fill(10,10), fill(5,20), nruns, "marathonade/10times10subsin5marathond.csv", doptim) # B
-    writemarathon([6,7,8,8,9], [3,3,3,3,3,3,3,3,3,3,3,3,2], nruns, "marathonade/67889_3marathond.csv", doptim) # C
-    writemarathon([5,6,7,8,9,9], [8,8,7,7,7,7], nruns, "marathonade/blockprexmarathond.csv", doptim) # D
-end
-function marathone()
-    nruns=1000
-    writemarathon(fill(6,5), fill(3,10), nruns, "marathonade/5times6subsinbs3marathone.csv", ecrit) # A
-    writemarathon(fill(10,10), fill(5,20), nruns, "marathonade/10times10subsin5marathone.csv", ecrit) # B
-    writemarathon([6,7,8,8,9], [3,3,3,3,3,3,3,3,3,3,3,3,2], nruns, "marathonade/67889_3marathone.csv", ecrit) # C
-    writemarathon([5,6,7,8,9,9], [8,8,7,7,7,7], nruns, "marathonade/blockprexmarathone.csv", ecrit) # D
-end
-function marathonemax()
-    nruns=1000
-    writemarathon(fill(6,5), fill(3,10), nruns, "marathonade/5times6subsinbs3marathonemax.csv", ecritm) # A
-    writemarathon(fill(10,10), fill(5,20), nruns, "marathonade/10times10subsin5marathonemax.csv", ecritm) # B
-    writemarathon([6,7,8,8,9], [3,3,3,3,3,3,3,3,3,3,3,3,2], nruns, "marathonade/67889_3marathonemax.csv", ecritm) # C
-    writemarathon([5,6,7,8,9,9], [8,8,7,7,7,7], nruns, "marathonade/blockprexmarathonemax.csv", ecritm) # D
-end
-function marathona()
-    nruns=1000
-    writemarathon(fill(6,5), fill(3,10), nruns, "marathonade/5times6subsinbs3marathona.csv", acrit) # A
-    writemarathon(fill(10,10), fill(5,20), nruns, "marathonade/10times10subsin5marathona.csv", acrit) # B
-    writemarathon([6,7,8,8,9], [3,3,3,3,3,3,3,3,3,3,3,3,2], nruns, "marathonade/67889_3marathona.csv", acrit) # C
-    writemarathon([5,6,7,8,9,9], [8,8,7,7,7,7], nruns, "marathonade/blockprexmarathona.csv", acrit) # D
-end
-
-function marathonade()
-    marathona()
-    marathond()
-    marathone()
-end
-
-function writemarathon(samplesizes, batchsizes, nRepeats, filename, optim=nothing)
-    if optim == nothing
-        optim = doptim
-    end
-    marathonlength = 1000
-    topleft = makeTopLeft(samplesizes)
-    bottomright = makeBottomRight(batchsizes)
-    funcs = [randombinary, sbathree]
-    towrite = zeros(Float64, (marathonlength*marathonlength, length(funcs)))
+function writemarathon(samplesizes, batchsizes, outer, inner, filename)
+    funcs = [randombinary, sba]
+    towrite = zeros(Float64, (inner*outer, length(funcs)))
     for (idx, fun) in enumerate(funcs)
         Random.seed!(1234)
-        dets = zeros(Float64, (0,1))
-        for i in 1:(marathonlength*marathonlength)
-            towrite[i, idx] = optim(fun(copy(samplesizes), copy(batchsizes)), topleft, bottomright)
-        end
+        towrite[:, idx] = getDeterminants(samplesizes, batchsizes, fun, outer*inner)
     end
     open(filename, "w") do thefile
         write(thefile, "randBin,SBAthree\n")
@@ -147,18 +60,27 @@ function writemarathon(samplesizes, batchsizes, nRepeats, filename, optim=nothin
     towrite
 end
 
-function getAllocation(samplesizes, batchsizes, nreps=1000, fun=sbathree, allocation=true, seed=nothing)
+function runall(inner=1000, outer=1, postfix="")
+    writealltocsv(fill(6,5), fill(3,10), inner*outer, "output/5times6subsinbs3"*postfix*".csv") # A
+#    writealltocsv([4,4,4,3,3,3,2,2], [5,5,5,5,5], nruns, "binaryimbalance.csv") # B
+    writealltocsv([5,6,7,8,9,9], [8,8,7,7,7,7], inner*outer, "output/blockprex"*postfix*".csv") # D
+    writealltocsv(fill(10,10), fill(5,20), inner*outer, "output/10times10subsinbs5"*postfix*".csv") # B
+    writealltocsv([6,7,8,8,9], [3,3,3,3,3,3,3,3,3,3,3,3,2], inner*outer, "output/67889_3"*postfix*".csv") # C
+end
+
+
+function getAllocation(samplesizes, batchsizes, nreps=1000, fun=sba, allocation=true, seed=nothing)
     if seed != nothing
         Random.seed!(seed)
     end
     topleft = makeTopLeft(samplesizes)
     bottomright = makeBottomRight(batchsizes)
-    bestdet = Inf
+    bestdet = 0.0
     bestallo = zeros(Int, (length(batchsizes), length(samplesizes)))
     for i in 1:nreps
         newallocation = fun(copy(samplesizes), copy(batchsizes))
         newdeterminant = doptim(newallocation, topleft, bottomright)
-        if newdeterminant < bestdet
+        if newdeterminant > bestdet
             bestdet = newdeterminant
             bestallo = newallocation
         end
@@ -176,33 +98,6 @@ end
 # 3 - 10
 # max batchsize
 # 2 - 10
-
-function betterrun(maxsubs, nruns, filename, newseed)
-    Random.seed!(newseed)
-    rv = zeros(Float64, (0, 4))
-    for g1=3:maxsubs
-        for g2=g1:maxsubs
-            for g3=g2:maxsubs
-                rv = vcat(rv, runthem([g1, g2, g3], nruns))
-                for g4=g3:maxsubs
-                    rv = vcat(rv, runthem([g1, g2, g3, g4], nruns))
-                    for g5=g4:maxsubs
-                        rv = vcat(rv, runthem([g1, g2, g3, g4, g5], nruns))
-                        for g6=g5:maxsubs
-                            rv = vcat(rv, runthem([g1, g2, g3, g4, g5, g6],nruns))
-                            println([g1 g2 g3 g4 g5 g6])
-                        end
-                    end
-                end
-            end
-        end
-    end
-    open(filename, "w") do thefile
-        write(thefile, "samplesizes,batchsize,SBA,randBin\n")
-        writedlm(thefile, rv, ",")
-    end
-    rv
-end
 
 function optimalrun(maxsubs, filename, newseed)
     Random.seed!(newseed)
@@ -233,23 +128,13 @@ end
 
 function runbest(samplesizes)
     rv = zeros(Float64, (0, 5))
-    for mbs=43min(sum(samplesizes), 10)
+    for mbs=min(sum(samplesizes), 10)
         # [samplesizes, batchsize, nsubs, optimalD, time]
         print("nsubs ", sum(samplesizes), " mbs ", mbs)
         batchsizes=maxbatchsizetobatchsizes(sum(samplesizes), mbs)
         optd = @timed getOptimalAllocation(copy(samplesizes), copy(batchsizes), timing=false, allocation=false)
         println(" time: ", optd[2])
         rv = vcat(rv, [string(samplesizes) mbs sum(samplesizes) optd[1] optd[2]])
-    end
-    rv
-end
-
-function runthem(samplesizes, nruns)
-    rv = zeros(Float64, (0, 4))
-    for mbs=2:min(sum(samplesizes), 10)
-        # [samplesizes, batchsize, random, sba]
-        batchsizes=maxbatchsizetobatchsizes(sum(samplesizes), mbs)
-        rv = vcat(rv, [string(samplesizes) mbs maximum(getDeterminants(samplesizes, batchsizes, sbathree, nruns)) maximum(getDeterminants(samplesizes, batchsizes, randombinary, nruns))])
     end
     rv
 end
@@ -329,4 +214,50 @@ function runnaivespace(samplesizes)
         rv = vcat(rv, [string(samplesizes) mbs sum(samplesizes) length(samplesizes) length(batchsizes) getlogspace(samplesizes, batchsizes, 10)])
     end
     rv
+end
+
+
+
+
+
+
+
+
+##############################
+
+function marathonvars(inner=1000, outer=1000, postfix="contrastvar")
+    writevartocsv(fill(6,5), fill(3,10), inner, outer, "5times6subsinbs3"*postfix*".csv") # A
+    #    writealltocsv([4,4,4,3,3,3,2,2], [5,5,5,5,5], nruns, "binaryimbalance.csv") # B old
+    # writealltocsv([5,6,7,8,9,9], [8,8,7,7,7,7], inner*outer, "output/blockprex"*postfix*".csv") # D
+    # writealltocsv(fill(10,10), fill(5,20), inner*outer, "output/10times10subsinbs5"*postfix*".csv") # B
+    writevartocsv([6,7,8,8,9], [3,3,3,3,3,3,3,3,3,3,3,3,2], inner, outer, "67889_3"*postfix*".csv") # C
+end
+
+function writevartocsv(samplesizes, batchsizes, inner, outer, filename)
+    towrite = fill("", (outer * 2*binomial(length(samplesizes), 2), 3))
+    for fun in [randombinary, sba]
+        funoffset = 0
+        if fun==sba
+            funoffset = binomial(length(samplesizes), 2) * outer
+        end
+        Random.seed!(1234)
+        for run=1:outer
+            pcs = allPairContrasts(getAllocation(samplesizes, batchsizes, inner, fun, true))
+            runoffset = (run-1) * binomial(length(samplesizes), 2)
+            varoffset = 0
+            for i=1:(length(samplesizes)-1)
+                for j=(i+1):length(samplesizes)
+                    varoffset += 1
+                    towrite[runoffset + funoffset + varoffset, 1] = string(fun)
+                    towrite[runoffset + funoffset + varoffset, 2] = string(i) * "-" * string(j)
+                    towrite[runoffset + funoffset + varoffset, 3] = string(round(pcs[i,j], digits=5))
+                end
+            end
+        end
+    end
+    open(filename, "w") do thefile
+        write(thefile, "function,contrast,variance\n")
+        writedlm(thefile, towrite, ",")
+    end
+    towrite 
 end

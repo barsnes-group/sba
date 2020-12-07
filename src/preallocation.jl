@@ -1,3 +1,5 @@
+using Combinatorics
+
 function preallocation(samplesizes,
                        batchsizes)
     return (preallocation!(copy(samplesizes),
@@ -17,3 +19,4 @@ function preallocation!(samplesizes, batchsizes)
     end
     allocations
 end
+
