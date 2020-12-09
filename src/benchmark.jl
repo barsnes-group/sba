@@ -76,6 +76,34 @@ function runmarathon(inner=1000, outer=1, postfix="")
     marathons([6,7,8,8,9], [3,3,3,3,3,3,3,3,3,3,3,3,2], inner, outer, "67889_3"*postfix*".csv") # C
 end
 
+function runmarathontime(inner=1000, outer=1, postfix="")
+    marathontime(fill(6,5), fill(3,10), inner, outer, "5times6subsinbs3"*postfix*".csv") # A
+#    marathons([4,4,4,3,3,3,2,2], [5,5,5,5,5], nruns, "binaryimbalance.csv") # B
+    marathontime([5,6,7,8,9,9], [8,8,7,7,7,7], inner, outer, "blockprex"*postfix*".csv") # D
+    marathontime(fill(10,10), fill(5,20), inner, outer, "10times10subsinbs5"*postfix*".csv") # B
+    marathontime([6,7,8,8,9], [3,3,3,3,3,3,3,3,3,3,3,3,2], inner, outer, "67889_3"*postfix*".csv") # C
+end
+
+function marathontime(samplesizes)
+    towrite = zeros(Float64, (outer, 0))
+    for fun in [randombinary, sba]
+        thisrundet = []
+        thisruntime = []
+        Random.seed!(1234)
+        for i=1:outer
+            allo = @timed getAllocation(samplesizes, batchsizes, inner, fun, false)
+            push!(thisrundet, allo[1])
+            push!(thisruntime, allo[2])
+        end
+        towrite = hcat(towrite, thisrundet, thisruntime)
+    end
+    open(filename, "w") do thefile
+        write(thefile, "RBA,RBAt,SBA,SBAt\n")
+        writedlm(thefile, towrite, ",")
+    end
+    towrite    
+end
+
 function marathons(samplesizes, batchsizes, inner, outer, filename)
     towrite = zeros(Float64, (outer, 0))
     for fun in [randombinary, sba]
