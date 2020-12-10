@@ -82,12 +82,12 @@ function runmarathontime(inner=1000, outer=1, postfix="")
     marathontime(fill(6,5), fill(3,10), inner, outer, "5times6subsinbs3"*postfix*".csv") # A
 #    marathons([4,4,4,3,3,3,2,2], [5,5,5,5,5], nruns, "binaryimbalance.csv") # B
     marathontime([5,6,7,8,9,9], [8,8,7,7,7,7], inner, outer, "blockprex"*postfix*".csv") # D
-    marathontime([5,5,8,8,10,10,12,12,15,15], fill(5,20), inner*outer, "5.5.8.8.10.10.12.12.15.15bs5"*postfix*".csv") # E
+    marathontime([5,5,8,8,10,10,12,12,15,15], fill(5,20), inner, outer, "5.5.8.8.10.10.12.12.15.15bs5"*postfix*".csv") # E
     marathontime(fill(10,10), fill(5,20), inner, outer, "10times10subsinbs5"*postfix*".csv") # B
     marathontime([6,7,8,8,9], [3,3,3,3,3,3,3,3,3,3,3,3,2], inner, outer, "67889_3"*postfix*".csv") # C
 end
 
-function marathontime(samplesizes)
+function marathontime(samplesizes, batchsizes, inner, outer, filename)
     towrite = zeros(Float64, (outer, 0))
     for fun in [randombinary, sba]
         thisrundet = []
