@@ -1,5 +1,3 @@
-using Combinatorics
-
 function preallocation(samplesizes::Array{<:Integer}, batchsizes::Array{<:Integer})
     return (preallocation!(copy(samplesizes),
                            copy(batchsizes)))

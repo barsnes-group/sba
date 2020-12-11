@@ -1,9 +1,3 @@
-using Combinatorics
-using LinearAlgebra
-using Dates
-include("preallocation.jl")
-include("dcrit.jl")
-
 # Call this function to find an optimal allocation for a given set of
 # sample sizes and batch sizes. Can take a long time if there are many
 # samples, many subjects per sample, many batches, or any combination.

@@ -1,11 +1,30 @@
 using StatsBase
 
+function rba(samplesizes::Array{<:Integer}, batchsizes::Array{<:Integer}, nreps=1000, seed=nothing)
+    if seed != nothing
+        Random.seed!(seed)
+    end
+    topleft = SBA.makeTopLeft(samplesizes)
+    bottomright = SBA.makeBottomRight(batchsizes)
+    bestdet = 0.0
+    bestallo = zeros(Int, (length(batchsizes), length(samplesizes)))
+    for i in 1:nreps
+        newallocation = randombinary!(copy(samplesizes), copy(batchsizes))
+        newdeterminant = SBA.dcrit(newallocation, topleft, bottomright)
+        if newdeterminant > bestdet
+            bestdet = newdeterminant
+            bestallo = newallocation
+        end
+    end
+    bestallo
+end
+
 function randombinary(samplesizes::Array{<:Integer}, batchsizes::Array{<:Integer})
     randombinary!(copy(samplesizes), copy(batchsizes))
 end
 
 function randombinary!(samplesizes::Array{<:Integer}, batchsizes::Array{<:Integer})
-    prealloc = preallocation!(samplesizes, batchsizes)
+    prealloc = SBA.preallocation!(samplesizes, batchsizes)
     if any(samplesizes .>= length(batchsizes)) ||
         sum(samplesizes) != sum(batchsizes)
         return zeros(Int, (length(batchsizes), length(samplesizes)))

@@ -1,8 +1,3 @@
-using Combinatorics
-#using LinearAlgebra
-using Dates
-include("preallocation.jl")
-
 function getlogspace(samplesizes::Array{<:Integer}, batchsizes::Array{<:Integer})
     pa = preallocation!(copy(samplesizes), copy(batchsizes))
     nzg = sum(samplesizes .- sum(pa, dims=1)' .> 0) # nonzero groups
@@ -26,8 +21,8 @@ function getspace!(samplesizes::Array{<:Integer}, batchsizes::Array{<:Integer}, 
     if (sum(samplesizes) == 0)
         return 1
     else
-        news = []
-        newb = []
+        news = Integer[]
+        newb = Integer[]
         for s in samplesizes
             if s > 0
                 push!(news, s)

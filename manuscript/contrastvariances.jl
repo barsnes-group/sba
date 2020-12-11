@@ -1,4 +1,11 @@
 using LinearAlgebra
+using DelimitedFiles
+using Random
+
+include("../src/sba.jl")
+using .SBA
+
+include("../src/random.jl")
 
 # N is incidence matrix
 function exampleincidence(optimal=true)
@@ -91,3 +98,35 @@ function allPairContrasts(incidence)
     rv
 end
 
+function writevartocsv(samplesizes, batchsizes, inner, outer, filename)
+    towrite = fill("", (outer * 2*binomial(length(samplesizes), 2), 3))
+    for fun in [rba, sba]
+        funoffset = 0
+        if fun==sba
+            funoffset = binomial(length(samplesizes), 2) * outer
+        end
+        Random.seed!(1234)
+        for run=1:outer
+            pcs = allPairContrasts(fun(samplesizes, batchsizes, inner))
+            runoffset = (run-1) * binomial(length(samplesizes), 2)
+            varoffset = 0
+            for i=1:(length(samplesizes)-1)
+                for j=(i+1):length(samplesizes)
+                    varoffset += 1
+                    towrite[runoffset + funoffset + varoffset, 1] = string(fun)
+                    towrite[runoffset + funoffset + varoffset, 2] = string(i) * "-" * string(j)
+                    towrite[runoffset + funoffset + varoffset, 3] = string(round(pcs[i,j], digits=5))
+                end
+            end
+        end
+    end
+    open(filename, "w") do thefile
+        write(thefile, "function,contrast,variance\n")
+        writedlm(thefile, towrite, ",")
+    end
+    towrite 
+end
+
+function contrastvariances(inner=1000, outer=1000, postfix="contrastvar")
+    writevartocsv([6,7,8,8,9], [3,3,3,3,3,3,3,3,3,3,3,3,2], inner, outer, "67889_3"*postfix*".csv") # C
+end
