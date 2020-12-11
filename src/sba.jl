@@ -2,7 +2,7 @@ using StatsBase
 using LinearAlgebra
 include("preallocation.jl")
 
-function getStartPair(lambda, groups)
+function getStartPair(lambda::Array{<:Integer}, groups::Array{<:Integer})
     minimum=lambda[groups[1],groups[2]]
     minarr=[groups[1] groups[2]]
     for i=1:(length(groups)-1), j=(i+1):length(groups)
@@ -16,15 +16,15 @@ function getStartPair(lambda, groups)
     minarr[sample(1:size(minarr, 1), 1)[1], :]
 end
 
-function getStartSingle(lambda, groups)
+function getStartSingle(lambda::Array{<:Integer}, groups::Array{<:Integer})
     groups[sample(findall(lambda[diagind(lambda)[groups]] .== minimum(lambda[diagind(lambda)[groups]])), 1)[1]]
 end
 
-function sba(samplesizes, batchsizes)
+function sba(samplesizes::Array{<:Integer}, batchsizes::Array{<:Integer})
     sba!(copy(samplesizes), copy(batchsizes))
 end
 
-function sba!(samplesizes, batchsizes)
+function sba!(samplesizes::Array{<:Integer}, batchsizes::Array{<:Integer})
     # Initial allocation
     preallo = preallocation!(samplesizes, batchsizes)
     allocations = zeros(Int, (length(batchsizes), length(samplesizes)))

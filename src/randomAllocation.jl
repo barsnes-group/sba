@@ -1,4 +1,4 @@
-include("doptim.jl")
+include("dcrit.jl")
 include("HBMV.jl")
 include("random.jl")
 
@@ -9,13 +9,13 @@ function getRandomAllocation(samplesizes, batchsizes, nruns=1000)
     bottomright = makeBottomRight(batchsizes)
     for i in 1:1000
         temp = sba(samplesizes, batchsizes)
-        dtemp = doptim(temp, topleft, bottomright)
+        dtemp = dcrit(temp, topleft, bottomright)
         if dopt > dtemp
             dopt = dtemp
             allocation = temp
         end
         temp = randombinary(samplesizes, batchsizes)
-        dtemp = doptim(temp, topleft, bottomright)
+        dtemp = dcrit(temp, topleft, bottomright)
         if dopt > dtemp
             dopt = dtemp
             allocation = temp
@@ -31,13 +31,13 @@ function onerun(samplesizes, batchsizes, nruns=1000)
     bottomright = makeBottomRight(batchsizes)
     for i in 1:1000
         temp = sba(samplesizes, batchsizes)
-        dtemp = doptim(temp, topleft, bottomright)
+        dtemp = dcrit(temp, topleft, bottomright)
         if dopt > dtemp
             dopt = dtemp
             allocation = temp
         end
         temp = randombinary(samplesizes, batchsizes)
-        dtemp = doptim(temp, topleft, bottomright)
+        dtemp = dcrit(temp, topleft, bottomright)
         if dopt > dtemp
             dopt = dtemp
             allocation = temp

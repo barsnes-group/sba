@@ -7,11 +7,11 @@ using LinearAlgebra
 # batches and T is the number of treatments.
 
 # higher is better
-function doptim(allom, topleft, bottomright)
+function dcrit(allom::Array{<:Integer}, topleft::Array{<:Integer}, bottomright::Array{<:Integer})
     det(infomat(allom, topleft, bottomright))
 end
 
-function makeTopLeft(samplesizes)
+function makeTopLeft(samplesizes::Array{<:Integer})
     sminone = length(samplesizes)-1
     a = samplesizes[2:end]
     b = zeros(Int, (sminone, sminone))
@@ -19,14 +19,14 @@ function makeTopLeft(samplesizes)
     hcat(vcat(sum(samplesizes), a), vcat(transpose(a), b))
 end
 
-function makeBottomRight(batchsizes)
+function makeBottomRight(batchsizes::Array{<:Integer})
     bminone = length(batchsizes)-1
     bottomright = zeros(Int, (bminone, bminone))
     bottomright[diagind(bottomright)] .= batchsizes[2:end]
     bottomright
 end
 
-function infomat(allom, topleft, bottomright)
+function infomat(allom::Array{<:Integer}, topleft::Array{<:Integer}, bottomright::Array{<:Integer})
     bottomleft = hcat(dropdims(sum(allom, dims=2), dims=2)[2:end],
                       allom[2:end, 2:end])
     hcat(vcat(topleft, bottomleft),

@@ -1,12 +1,11 @@
 using Combinatorics
 
-function preallocation(samplesizes,
-                       batchsizes)
+function preallocation(samplesizes::Array{<:Integer}, batchsizes::Array{<:Integer})
     return (preallocation!(copy(samplesizes),
                            copy(batchsizes)))
 end
 
-function preallocation!(samplesizes, batchsizes)
+function preallocation!(samplesizes::Array{<:Integer}, batchsizes::Array{<:Integer})
     Nbatch = length(batchsizes)
     allocations = zeros(Int, (Nbatch,length(samplesizes)))
     for i in eachindex(samplesizes)

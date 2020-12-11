@@ -1,4 +1,4 @@
-function maxbatchsizetobatchsizes(N, mbs)
+function maxbatchsizetobatchsizes(N::Integer, mbs::Integer)
     if mbs < 1 || N < 1
         error("N and max batchsize should both be at least 1")
     end
@@ -8,10 +8,14 @@ function maxbatchsizetobatchsizes(N, mbs)
     if restbatch > 0
         rv[1:restbatch] .+= 1
     end
-    return(rv)
+    rv
 end
 
-function nrbatchtobatchsizes(N, nbatch)
+function maxbatchsizetobatchsizes(N::Array{<:Integer}, mbs::Integer)
+    maxbatchsizetobatchsizes(sum(N), mbs)
+end
+
+function nrbatchtobatchsizes(N::Integer, nbatch::Integer)
     if nbatch < 1 || N < 1
         error("N and max batchsize should both be at least 1")
     end
@@ -20,5 +24,9 @@ function nrbatchtobatchsizes(N, nbatch)
     if restbatch > 0
         rv[1:restbatch] .+= 1
     end
-    return(rv)
+    rv
+end
+
+function nrbatchtobatchsizes(N::Array{<:Integer}, nbatch)
+    nrbatchtobatchsizes(sum(N), nbatch)
 end

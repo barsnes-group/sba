@@ -1,10 +1,10 @@
 using StatsBase
 
-function randombinary(samplesizes, batchsizes)
+function randombinary(samplesizes::Array{<:Integer}, batchsizes::Array{<:Integer})
     randombinary!(copy(samplesizes), copy(batchsizes))
 end
 
-function randombinary!(samplesizes, batchsizes)
+function randombinary!(samplesizes::Array{<:Integer}, batchsizes::Array{<:Integer})
     prealloc = preallocation!(samplesizes, batchsizes)
     if any(samplesizes .>= length(batchsizes)) ||
         sum(samplesizes) != sum(batchsizes)
@@ -30,7 +30,7 @@ function randombinary!(samplesizes, batchsizes)
     return prealloc
 end
 
-function randomnonbinary(samplesizes, batchsizes)
+function randomnonbinary(samplesizes::Array{<:Integer}, batchsizes::Array{<:Integer})
     if sum(samplesizes) != sum(batchsizes)
         return zeros(Int, (length(batchsizes), length(samplesizes)))
     end

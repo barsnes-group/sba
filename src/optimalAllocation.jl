@@ -2,7 +2,7 @@ using Combinatorics
 using LinearAlgebra
 using Dates
 include("preallocation.jl")
-include("doptim.jl")
+include("dcrit.jl")
 
 # Call this function to find an optimal allocation for a given set of
 # sample sizes and batch sizes. Can take a long time if there are many
@@ -14,20 +14,23 @@ include("doptim.jl")
 # 2-dimensional Array of size (B, T) where B is the number of batches
 # and T is the number of treatments, with the number of subjects of
 # each treatment per batch.
-function getOptimalAllocation(samplesizes, batchsizes; timing=false, allocation=true)
+function getOptimalAllocation(samplesizes::Array{<:Integer}, batchsizes::Array{<:Integer}; timing=false, allocation=true)
     topleft = makeTopLeft(samplesizes)
     bottomright = makeBottomRight(batchsizes)
-    pre = preallocation!(samplesizes, batchsizes)
-    incidence = optimalAllocation(zeros(Int, (0,length(samplesizes))), samplesizes, batchsizes, Combinatorics.combinations, topleft, bottomright, pre, timing)
+    samps = copy(samplesizes)
+    bats = copy(batchsizes)
+    pre = preallocation!(samps, bats)
+    incidence = optimalAllocation(zeros(Int, (0,length(samps))), samps, bats, Combinatorics.combinations, topleft, bottomright, pre, timing)
     if allocation
         return incidence
     else
-        return doptim(incidence, topleft, bottomright)
+        return dcrit(incidence, topleft, bottomright)
     end
 end
 
 # This is a helper function, do not call by hand.
-function optimalAllocation(allocation, samplesizes, batchsizes, fun, topleft, bottomright, preallocation, timing)
+function optimalAllocation(allocation::Array{<:Integer}, samplesizes::Array{<:Integer}, batchsizes::Array{<:Integer},
+                           fun, topleft::Array{<:Integer}, bottomright::Array{<:Integer}, preallocation::Array{<:Integer}, timing)
     time0 = now()
     currentbatch = size(allocation, 1)+1
     allocated = dropdims(sum(allocation, dims=1), dims=1)
@@ -73,7 +76,7 @@ function optimalAllocation(allocation, samplesizes, batchsizes, fun, topleft, bo
         newbatch[cmb] .= 1
         newbatch[deterministic] .= 1
         tempalloc = optimalAllocation(vcat(allocation, newbatch), samplesizes, batchsizes, fun, topleft, bottomright, preallocation, false)
-        tempdet = doptim(tempalloc, topleft, bottomright)
+        tempdet = dcrit(tempalloc, topleft, bottomright)
         if tempdet < bestdet
             bestalloc = tempalloc
             bestdet = tempdet

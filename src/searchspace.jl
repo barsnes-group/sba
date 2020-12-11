@@ -3,45 +3,25 @@ using Combinatorics
 using Dates
 include("preallocation.jl")
 
-function nonzerovector(x)
-    rv = []
-    for xx in x
-        if xx > 0
-            push!(rv, xx)
-        end
+function getlogspace(samplesizes::Array{<:Integer}, batchsizes::Array{<:Integer})
+    pa = preallocation!(copy(samplesizes), copy(batchsizes))
+    nzg = sum(samplesizes .- sum(pa, dims=1)' .> 0) # nonzero groups
+    apb = sum(pa, dims=2)[1] # allocations per batch
+    nzbs = batchsizes[findall(batchsizes .> apb)] .- apb
+    pop!(nzbs) # remove last element, as that batch always has only one option
+
+    space = 0
+    for i=eachindex(nzbs)
+        space += log(10, binomial(nzg, nzbs[i]))
     end
-    rv
+    space
 end
 
-function getlogspace(samplesizes, batchsizes, base=10)
-    getlogspace!(copy(samplesizes), copy(batchsizes), base)
-end
-
-function getlogspace!(samplesizes, batchsizes, base=10)
-    preallocation!(samplesizes, batchsizes)
-    if (sum(samplesizes) == 0)
-        return 0
-    else
-        news = nonzerovector(samplesizes)
-        newb = nonzerovector(batchsizes)
-        return naivelogspace(news, newb, base)
-    end
-end
-
-function naivelogspace(samplesizes, batchsizes, base=10)
-    if length(batchsizes) == 1
-        return log(base, 1)
-    else
-        return log(base, binomial(length(samplesizes), batchsizes[1])) +
-            naivelogspace(samplesizes, batchsizes[2:end])
-    end
-end
-
-function getspace(samplesizes, batchsizes, naive=true)
+function getspace(samplesizes::Array{<:Integer}, batchsizes::Array{<:Integer}, naive=true)
     getspace!(copy(samplesizes), copy(batchsizes), naive)
 end
 
-function getspace!(samplesizes, batchsizes, naive=true)
+function getspace!(samplesizes::Array{<:Integer}, batchsizes::Array{<:Integer}, naive=true)
     preallocation!(samplesizes, batchsizes)
     if (sum(samplesizes) == 0)
         return 1
@@ -66,7 +46,7 @@ function getspace!(samplesizes, batchsizes, naive=true)
     end
 end
 
-function naivespace(samplesizes, batchsizes)
+function naivespace(samplesizes::Array{<:Integer}, batchsizes::Array{<:Integer})
     if length(batchsizes) == 1
         return 1
     else
@@ -75,7 +55,11 @@ function naivespace(samplesizes, batchsizes)
     end
 end
 
-function exhaustivespace!(allocation, samplesizes, batchsizes)
+function exhaustivespace(allocation::Array{<:Integer}, samplesizes::Array{<:Integer}, batchsizes::Array{<:Integer})
+    exhaustivespace!(allocation, samplesizes, batchsizes)
+end
+
+function exhaustivespace!(allocation::Array{<:Integer}, samplesizes::Array{<:Integer}, batchsizes::Array{<:Integer})
     time0 = now()
     currentbatch = size(allocation, 1)+1
     allocated = dropdims(sum(allocation, dims=1), dims=1)
