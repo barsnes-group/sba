@@ -1,87 +1,33 @@
 # Structured Stochastic Batch Allocation
 
 Julia code for the allocation of a fixed cohort to batches.
-Currently it is not a Module, but rather just a set of files.
 
 First install [Julia](https://julialang.org) and download the repository.
+Currently it is implemented as a module, but not added to the General Registry.
 
-## Optimal allocation
-Run the following, either as a file or interactively.
-The sample sizes and batch sizes are examples.
-Take care that the sum of the batch sizes equals the sum of the sample sizes.
+To run the algorithm
 
-    include("optimalAllocation.jl")
-    samplesizes = [5, 6, 7, 8, 9, 9]
-    batchsizes = [8, 8, 7, 7, 7, 7]
-    getOptimalAllocation(samplesizes, batchsizes)
+    include("../src/sba.jl")
+    using .SBA
 
-This can take a very long time for larger cohorts.
-
-## Quick random allocation
-To run a quick random allocation of a larger cohort, when it takes too long to find the optimal allocation, run the following.
-This runs both sba and the completely random binary allocation algorithms and picks the best out of a number of repeated runs.
-
-    include("randomAllocation.jl")
-    samplesizes = [5, 6, 7, 8, 9, 9]
-    batchsizes = [8, 8, 7, 7, 7, 7]
-    nruns = 1000
-    getRandomAllocation(samplesizes, batchsizes, 1000)
-
-
-## Quick allocation with a specific algorithm
-
-### sba
-To run a quick structured allocation of a larger cohort with sba, when it takes too long to find the optimal allocation, run the following.
-
-    include("sba.jl")
     samplesizes = [5, 6, 7, 8, 9, 9]
     batchsizes = [8, 8, 7, 7, 7, 7]
     sba(samplesizes, batchsizes)
 
-Given the speed and stochastic nature of the algorithm it is advised to run the algorithm multiple times and take the best one.
+If you only know the maximum batch size
 
-    include("doptim.jl")
-    include("sba.jl")
-    samplesizes = [5, 6, 7, 8, 9, 9]
-    batchsizes = [8, 8, 7, 7, 7, 7]
-    dopt = 0
-    allocation = zeros(Int, (length(samplesizes), length(batchsizes)))
-    topleft = makeTopLeft(samplesizes)
-    bottomright = makeBottomRight(batchsizes)
-    for i in 1:1000
-        temp = hbmv(samplesizes, batchsizes)
-        dtemp = doptim(temp, topleft, bottomright)
-        if dopt < dtemp
-            dopt = dtemp
-            allocation = temp
-        end
-    end
-    allocation
+    batchsizes = maxbatchsizetobatchsizes(samplesizes, 8)
 
-## Completely random (binary) allocation
-To run a quick random allocation of a larger cohort, when it takes too long to find the optimal allocation, run the following.
+In the (perhaps odd) situation where you only know the number of batches
 
-    include("random.jl")
-    samplesizes = [5, 6, 7, 8, 9, 9]
-    batchsizes = [8, 8, 7, 7, 7, 7]
-    randombinary(samplesizes, batchsizes)
+    batchsizes = nrbatchtobatchsizes(samplesizes, 6)
 
-Given the speed and stochastic nature of the algorithm it is advised to run the algorithm multiple times and take the best one.
+To check how much computations it would (very) roughly take to exhaustively calculate the best allocation
 
-    include("doptim.jl")
-    include("random.jl")
-    samplesizes = [5, 6, 7, 8, 9, 9]
-    batchsizes = [8, 8, 7, 7, 7, 7]
-    dopt = 0
-    allocation = zeros(Int, (length(samplesizes), length(batchsizes)))
-    topleft = makeTopLeft(samplesizes)
-    bottomright = makeBottomRight(batchsizes)
-    for i in 1:1000
-        temp = randombinary(samplesizes, batchsizes)
-        dtemp = doptim(temp, topleft, bottomright)
-        if dopt < dtemp
-            dopt = dtemp
-            allocation = temp
-        end
-    end
-    allocation
+    getlogspace(samplesizes, batchsizes)
+
+Between 1e7 - 1e8 might take a couple of minutes, above 1e8 the computing time needed to exhaustively calculate the best allocation increases very rapidly.
+
+If it seems feasible to exhaustively calculate the best allocation
+
+    getOptimalAllocation(samplesizes, batchsizes)
