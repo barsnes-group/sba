@@ -5,7 +5,7 @@ using Random
 include("../src/sba.jl")
 using .SBA
 
-include("../src/random.jl")
+include("random.jl")
 
 # N is incidence matrix
 function exampleincidence(optimal=true)
