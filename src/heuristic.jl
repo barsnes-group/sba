@@ -16,7 +16,73 @@ function getStartSingle(lambda::Array{<:Integer}, groups::Array{<:Integer})
     groups[sample(findall(lambda[diagind(lambda)[groups]] .== minimum(lambda[diagind(lambda)[groups]])), 1)[1]]
 end
 
-function sba(samplesizes::Array{<:Integer}, batchsizes::Array{<:Integer}, nreps=1000, seed=nothing)
+"""
+    sba(samplesizes, batchsizes, tracebreak=1000, seed=nothing; maxreps=0)
+
+Return a batch allocation for the given sample and batch sizes.  To
+keep trying allocations until no improvement is found for x tries, set
+`tracebreak`.  To limit the total number of tries, set `maxreps`.
+Setting either to anything less than 1 will set the given value to
+infinity.
+
+See also: maxbatchsizetobatchsizes, nrbatchtobatchsizes
+
+# Examples
+```jldoctest
+julia> sba([6,6,6,6,6], [5,5,5,5,5,5])
+6×5 Array{Int64,2}:
+ 1  1  1  1  1
+ 1  1  1  1  1
+ 1  1  1  1  1
+ 1  1  1  1  1
+ 1  1  1  1  1
+ 1  1  1  1  1
+
+julia> sba(fill(6,5), fill(3,10), seed=123)
+10×5 Array{Int64,2}:
+ 1  0  0  1  1
+ 1  1  1  0  0
+ 0  1  1  1  0
+ 0  0  1  1  1
+ 1  1  0  0  1
+ 0  1  1  0  1
+ 1  0  1  1  0
+ 0  1  0  1  1
+ 1  0  1  0  1
+ 1  1  0  1  0
+
+julia> sba(fill(6,5), fill(3,10), 10, seed=123)
+10×5 Array{Int64,2}:
+ 1  1  0  0  1
+ 1  0  1  1  0
+ 0  1  1  0  1
+ 1  0  0  1  1
+ 0  1  1  1  0
+ 1  0  1  0  1
+ 1  1  0  1  0
+ 0  0  1  1  1
+ 0  1  0  1  1
+ 1  1  1  0  0
+
+julia> sba(fill(6,6), fill(4,9), 0, seed=123, maxreps=20)
+9×6 Array{Int64,2}:
+ 1  0  1  1  0  1
+ 1  1  1  0  1  0
+ 0  1  0  1  1  1
+ 1  0  0  1  1  1
+ 0  1  1  1  0  1
+ 1  1  1  1  0  0
+ 0  1  1  0  1  1
+ 1  1  0  1  1  0
+ 1  0  1  0  1  1
+```
+"""
+function sba(samplesizes::Array{<:Integer}, batchsizes::Array{<:Integer}, tracebreak=1000; seed=nothing, maxreps=0)
+    if tracebreak <= 0 && maxreps <= 0
+        throw(DomainError((tracebreak, maxreps), "either tracebreak or maxreps must be strictly positive"))
+    end
+    tracebreak = tracebreak > 0 ? tracebreak : Base.Inf
+    maxreps = maxreps > 0 ? maxreps : Base.Inf
     if seed != nothing
         Random.seed!(seed)
     end
@@ -24,12 +90,18 @@ function sba(samplesizes::Array{<:Integer}, batchsizes::Array{<:Integer}, nreps=
     bottomright = makeBottomRight(batchsizes)
     bestdet = 0.0
     bestallo = zeros(Int, (length(batchsizes), length(samplesizes)))
-    for i in 1:nreps
+    itrace = 0
+    ireps = 0
+    while ireps < maxreps && itrace < tracebreak
+        ireps += 1
+        itrace += 1
+        # println(ireps, "\t", itrace)
         newallocation = singlerun!(copy(samplesizes), copy(batchsizes))
         newdeterminant = dcrit(newallocation, topleft, bottomright)
         if newdeterminant > bestdet
             bestdet = newdeterminant
             bestallo = newallocation
+            itrace = 0
         end
     end
     bestallo

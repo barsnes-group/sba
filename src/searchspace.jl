@@ -1,6 +1,26 @@
+"""
+    getlogspace(samplesizes, batchsizes)
+
+Return an approximation of the number of possible allocations, log10.
+
+# Examples
+```jldoctest
+julia> getlogspace(fill(6,5), fill(5,6))
+0.0
+
+julia> getlogspace(fill(6,5), fill(3,10))
+9.0
+
+julia> getlogspace(fill(10,10), fill(5,20))
+45.62661027484934
+```
+"""
 function getlogspace(samplesizes::Array{<:Integer}, batchsizes::Array{<:Integer})
     pa = preallocation!(copy(samplesizes), copy(batchsizes))
     nzg = sum(samplesizes .- sum(pa, dims=1)' .> 0) # nonzero groups
+    if nzg == 0
+        return 0.0
+    end
     apb = sum(pa, dims=2)[1] # allocations per batch
     nzbs = batchsizes[findall(batchsizes .> apb)] .- apb
     pop!(nzbs) # remove last element, as that batch always has only one option

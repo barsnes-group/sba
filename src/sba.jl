@@ -1,6 +1,7 @@
 module SBA
 
 using StatsBase
+using Random
 using LinearAlgebra
 using Dates
 using Combinatorics

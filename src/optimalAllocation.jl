@@ -8,6 +8,39 @@
 # 2-dimensional Array of size (B, T) where B is the number of batches
 # and T is the number of treatments, with the number of subjects of
 # each treatment per batch.
+"""
+    getOptimalAllocation(samplesizes, batchsizes; timing=false, allocation=true)
+
+Return an optimal allocation or the optimal D-criterium score.
+
+See also: getlogspace, maxbatchsizetobatchsizes, nrbatchtobatchsizes
+
+# Examples
+```jldoctest
+julia> getOptimalAllocation(fill(6,5), fill(5,6))
+6×5 Array{Int64,2}:
+ 1  1  1  1  1
+ 1  1  1  1  1
+ 1  1  1  1  1
+ 1  1  1  1  1
+ 1  1  1  1  1
+ 1  1  1  1  1
+
+julia> getOptimalAllocation(fill(6,5), fill(5,6), allocation=false)
+4.0500000000000033e6
+
+julia> getOptimalAllocation(fill(4,5), fill(4,5))
+5×5 Array{Int64,2}:
+ 1  1  1  1  0
+ 1  1  1  0  1
+ 1  1  0  1  1
+ 1  0  1  1  1
+ 0  1  1  1  1
+
+julia> getOptimalAllocation(fill(4,5), fill(4,5), allocation=false)
+40500.0
+```
+"""
 function getOptimalAllocation(samplesizes::Array{<:Integer}, batchsizes::Array{<:Integer}; timing=false, allocation=true)
     topleft = makeTopLeft(samplesizes)
     bottomright = makeBottomRight(batchsizes)
