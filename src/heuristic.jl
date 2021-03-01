@@ -17,7 +17,7 @@ function getStartSingle(lambda::Array{<:Integer}, groups::Array{<:Integer})
 end
 
 """
-    sba(samplesizes, batchsizes, tracebreak=1000, seed=nothing; maxreps=0)
+    sba(samplesizes, batchsizes; tracebreak=1000, maxreps=0, seed=nothing)
 
 Return a batch allocation for the given sample and batch sizes.  To
 keep trying allocations until no improvement is found for x tries, set
@@ -51,7 +51,7 @@ julia> sba(fill(6,5), fill(3,10), seed=123)
  1  0  1  0  1
  1  1  0  1  0
 
-julia> sba(fill(6,5), fill(3,10), 10, seed=123)
+julia> sba(fill(6,5), fill(3,10), tracebreak=10, seed=123)
 10×5 Array{Int64,2}:
  1  1  0  0  1
  1  0  1  1  0
@@ -64,7 +64,7 @@ julia> sba(fill(6,5), fill(3,10), 10, seed=123)
  0  1  0  1  1
  1  1  1  0  0
 
-julia> sba(fill(6,6), fill(4,9), 0, seed=123, maxreps=20)
+julia> sba(fill(6,6), fill(4,9), tracebreak=0, maxreps=20, seed=123)
 9×6 Array{Int64,2}:
  1  0  1  1  0  1
  1  1  1  0  1  0
@@ -77,7 +77,7 @@ julia> sba(fill(6,6), fill(4,9), 0, seed=123, maxreps=20)
  1  0  1  0  1  1
 ```
 """
-function sba(samplesizes::Array{<:Integer}, batchsizes::Array{<:Integer}, tracebreak=1000; seed=nothing, maxreps=0)
+function sba(samplesizes::Array{<:Integer}, batchsizes::Array{<:Integer}; tracebreak=1000, maxreps=0, seed=nothing)
     if tracebreak <= 0 && maxreps <= 0
         throw(DomainError((tracebreak, maxreps), "either tracebreak or maxreps must be strictly positive"))
     end

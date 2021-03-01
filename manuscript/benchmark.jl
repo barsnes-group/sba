@@ -55,7 +55,7 @@ function marathontime(samplesizes, batchsizes, inner, outer, filename)
         thisruntime = []
         Random.seed!(1234)
         for i=1:outer
-            allo = @timed fun(samplesizes, batchsizes, inner)
+            allo = @timed fun(samplesizes, batchsizes, tracebreak=0, maxreps=inner)
             push!(thisrundet, SBA.dcrit(allo[1], topleft, bottomright))
             push!(thisruntime, allo[2])
         end

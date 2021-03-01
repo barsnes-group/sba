@@ -1,6 +1,6 @@
 using StatsBase
 
-function rba(samplesizes::Array{<:Integer}, batchsizes::Array{<:Integer}, nreps=1000, seed=nothing)
+function rba(samplesizes::Array{<:Integer}, batchsizes::Array{<:Integer}; tracebreak=1000, maxreps=0, seed=nothing)
     if seed != nothing
         Random.seed!(seed)
     end

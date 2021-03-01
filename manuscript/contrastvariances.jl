@@ -107,7 +107,7 @@ function writevartocsv(samplesizes, batchsizes, inner, outer, filename)
         end
         Random.seed!(1234)
         for run=1:outer
-            pcs = allPairContrasts(fun(samplesizes, batchsizes, inner))
+            pcs = allPairContrasts(fun(samplesizes, batchsizes, tracebreak=0, maxreps=inner))
             runoffset = (run-1) * binomial(length(samplesizes), 2)
             varoffset = 0
             for i=1:(length(samplesizes)-1)
