@@ -8,12 +8,17 @@ function rba(samplesizes::Array{<:Integer}, batchsizes::Array{<:Integer}; traceb
     bottomright = SBA.makeBottomRight(batchsizes)
     bestdet = 0.0
     bestallo = zeros(Int, (length(batchsizes), length(samplesizes)))
-    for i in 1:nreps
+    itrace = 0
+    ireps = 0
+    while ireps < maxreps && itrace < tracebreak
+        ireps += 1
+        itrace += 1
         newallocation = randombinary!(copy(samplesizes), copy(batchsizes))
         newdeterminant = SBA.dcrit(newallocation, topleft, bottomright)
         if newdeterminant > bestdet
             bestdet = newdeterminant
             bestallo = newallocation
+            itrace = 0
         end
     end
     bestallo
