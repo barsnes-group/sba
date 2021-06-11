@@ -33,7 +33,8 @@ PuOr1 <- "#e66101"
 PuOr2 <- "#fdb863"
 PuOr3 <- "#b2abd2"
 PuOr4 <- "#5e3c99"
-png("beanplots.png", width=800, height=800)
+## png("beanplots.png", width=800, height=800)
+pdf("beanplots.pdf", width=10, height=10)
 par(mfrow=c(2,2))
 beanplot(setA[, c("RBA", "SBA")],
          what=c(0,1,0,1),

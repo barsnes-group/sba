@@ -78,7 +78,8 @@ legend("topleft", legend=c("# Calculations", "Estimated", "Actual"),
 ## Figure CR 3
 singlecolour <- rgb(0, 147, 146, max=256)
 singlecolourline <- rgb(0, 147, 146, 64, max=256)
-png("timevscalcexpo.png", width=600, height=600)
+## png("timevscalcexpo.png", width=600, height=600)
+pdf("timevscalcexpo.pdf", width=6, height=6)
 scatter.smooth(timings$naive, timings$time/60, log="x",
                family = c("symmetric", "gaussian"),
                main="Time vs # calculations",
