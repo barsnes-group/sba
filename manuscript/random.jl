@@ -1,6 +1,8 @@
 using StatsBase
 
 function rba(samplesizes::Array{<:Integer}, batchsizes::Array{<:Integer}; tracebreak=1000, maxreps=0, seed=nothing)
+    tracebreak = tracebreak > 0 ? tracebreak : Base.Inf
+    maxreps = maxreps > 0 ? maxreps : Base.Inf
     if seed != nothing
         Random.seed!(seed)
     end

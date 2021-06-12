@@ -36,6 +36,7 @@ function runall(inner=1000, outer=1; postfix="")
     writealltocsv([5,5,8,8,10,10,12,12,15,15], fill(5,20), inner*outer, "5.5.8.8.10.10.12.12.15.15bs5"*postfix*".csv") # E
     writealltocsv(fill(10,10), fill(5,20), inner*outer, "10times10subsinbs5"*postfix*".csv") # B
     writealltocsv([6,7,8,8,9], [3,3,3,3,3,3,3,3,3,3,3,3,2], inner*outer, "67889_3"*postfix*".csv") # C
+    writealltocsv(fill(35,8), fill(5,56), inner*outer, "BIBD8treats35replicates5perblock"*postfix*".csv") # F
 end
 
 function runmarathontime(inner=1000, outer=1000; postfix="")
@@ -44,6 +45,7 @@ function runmarathontime(inner=1000, outer=1000; postfix="")
     marathontime([5,5,8,8,10,10,12,12,15,15], fill(5,20), inner, outer, "5.5.8.8.10.10.12.12.15.15bs5"*postfix*".csv") # E
     marathontime(fill(10,10), fill(5,20), inner, outer, "10times10subsinbs5"*postfix*".csv") # B
     marathontime([6,7,8,8,9], [3,3,3,3,3,3,3,3,3,3,3,3,2], inner, outer, "67889_3"*postfix*".csv") # C
+    marathontime(fill(35,8), fill(5,56), inner, outer, "BIBD8treats35replicates5perblock"*postfix*".csv") # F
 end
 
 function marathontime(samplesizes, batchsizes, inner, outer, filename)
@@ -65,5 +67,42 @@ function marathontime(samplesizes, batchsizes, inner, outer, filename)
         write(thefile, "RBA,RBAt,SBA,SBAt\n")
         writedlm(thefile, towrite, ",")
     end
-    towrite    
+    towrite
+end
+
+function runindefiniterunstime(inner=0, outer=1000, tracebreak=1000; postfix="")
+    indefiniterunstime(fill(6,5), fill(3,10), inner, outer, tracebreak, "5times6subsinbs3"*postfix*".csv") # A
+    indefiniterunstime([5,6,7,8,9,9], [8,8,7,7,7,7], inner, outer, tracebreak, "blockprex"*postfix*".csv") # D
+    indefiniterunstime([5,5,8,8,10,10,12,12,15,15], fill(5,20), inner, outer, tracebreak, "5.5.8.8.10.10.12.12.15.15bs5"*postfix*".csv") # E
+    indefiniterunstime(fill(10,10), fill(5,20), inner, outer, tracebreak, "10times10subsinbs5"*postfix*".csv") # B
+    indefiniterunstime([6,7,8,8,9], [3,3,3,3,3,3,3,3,3,3,3,3,2], inner, outer, tracebreak, "67889_3"*postfix*".csv") # C
+    indefiniterunstime(fill(35,8), fill(5,56), inner, outer, tracebreak, "BIBD8treats35replicates5perblock"*postfix*".csv") # F
+end
+
+function indefiniterunstime(samplesizes, batchsizes, inner, outer, tracebreak, filename)
+    topleft = SBA.makeTopLeft(samplesizes)
+    bottomright = SBA.makeBottomRight(batchsizes)
+    towrite = zeros(Float64, (outer, 0))
+    for fun in [rba, sba]
+        thisrundet = []
+        thisruntime = []
+        Random.seed!(1234)
+        for i=1:outer
+            allo = @timed fun(samplesizes, batchsizes, tracebreak=tracebreak, maxreps=inner)
+            push!(thisrundet, SBA.dcrit(allo[1], topleft, bottomright))
+            push!(thisruntime, allo[2])
+        end
+        towrite = hcat(towrite, thisrundet, thisruntime)
+    end
+    open(filename, "w") do thefile
+        write(thefile, "RBA,RBAt,SBA,SBAt\n")
+        writedlm(thefile, towrite, ",")
+    end
+    towrite
+end
+
+function runalltheexamples()
+    runall(postfix="single")
+    runmarathontime(postfix="maratime")
+    runindefiniterunstime(postfix="indefruns")
 end
