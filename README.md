@@ -1,6 +1,7 @@
 # Structured Stochastic Batch Allocation
 
 Julia code for the allocation of a fixed cohort to batches.
+This algorithm is published in the journal [*Biostatistics*](https://doi.org/10.1093/biostatistics/kxac014).
 
 First install [Julia](https://julialang.org) and download the repository.
 Currently it is implemented as a module, but not added to the General Registry.
